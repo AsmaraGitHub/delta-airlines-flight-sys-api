@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <apikit:config name="delta-airline-flights-sys-api-config" api="resource::ddc2731e-d2a0-4bd1-b2ea-e98f2bf9900f:delta-airline-flights-sys-api:1.0.3:raml:zip:delta-airline-flights-sys-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <http:listener-config name="delta-airline-flights-sys-api-httpListenerConfig" doc:name="HTTP Listener config" doc:id="03ecc1ee-76e7-40a0-a0ea-7d0631b5b78d">
+        <http:listener-connection host="0.0.0.0" port="8087" readTimeout="300000"/>
+    </http:listener-config>
+    <flow name="delta-airline-flights-sys-api-main">
+        <http:listener config-ref="delta-airline-flights-sys-api-httpListenerConfig" path="/delta" doc:name="DELTA">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+		<apikit:router config-ref="delta-airline-flights-sys-api-config" />
+		<error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:BAD_REQUEST" enableNotifications="true" logException="true">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="delta-airline-flights-sys-api-console">
+        <http:listener config-ref="delta-airline-flights-sys-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+		<apikit:console config-ref="delta-airline-flights-sys-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND" enableNotifications="true" logException="true">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\delta:application\json:delta-airline-flights-sys-api-config">
+		<logger level="INFO" doc:name="Logger" doc:id="9fef6fab-0768-4909-99de-470d8f9db475" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+  {
+    Airline: "delta",
+    ID: 1,
+    code: "rree0001",
+    price: 541,
+    departureDate: "2016-01-20T00:00:00",
+    origin: "MUA",
+    destination: "LAX",
+    emptySeats: 0,
+    plane: {
+      "type": "Boeing 787",
+      totalSeats: 200
+    }
+  }, 
+  {
+    Airline: "delta",
+    ID: 2,
+    code: "eefd0123",
+    price: 300,
+    departureDate: "2016-01-25T00:00:00",
+    origin: "MUA",
+    destination: "CLE",
+    emptySeats: 7,
+    plane: {
+      "type": "Boeing 747",
+      totalSeats: 345
+    }
+  }, 
+  {
+    Airline: "delta",
+    ID: 1,
+    code: "rree0001",
+    price: 541,
+    departureDate: "2016-01-20T00:00:00",
+    origin: "MUA",
+    destination: "LAX",
+    emptySeats: 0,
+    plane: {
+      "type": "Boeing 787",
+      totalSeats: 200
+    }
+  }, 
+  {
+    Airline: "delta",
+    ID: 2,
+    code: "eefd0123",
+    price: 300,
+    departureDate: "2016-01-25T00:00:00",
+    origin: "MUA",
+    destination: "CLE",
+    emptySeats: 7,
+    plane: {
+      "type": "Boeing 747",
+      totalSeats: 345
+    }
+  }
+] ]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<logger level="INFO" doc:name="DELTA START" doc:id="e76e11f2-d14d-4666-88a1-5a8c4a554b5b" message="delta END" />
+		<http:request method="GET" doc:name="DELTA REQUEST" doc:id="f09e2cf5-6409-44fe-a6f9-7e4c54f128ee" config-ref="HTTP_Request_configuration-delta" path="${delta.path}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	 "airline" : "attributes.headers.airline"
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/json
+---
+{
+	"trip": true,
+	"connection": false,
+	"round_trip": true
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="DELTA END" doc:id="71b3dd9c-97f0-4c88-b0b9-3804ccf498c4" message="delta END" />
+		<logger level="INFO" doc:name="Logger" doc:id="ebb1e533-5111-47c6-8642-91e95f31d88a" message="#[payload]" />
+		<error-handler>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="e68cbe67-b975-4d24-8b97-889e3466a6f5" type=" HTTP:NOT_FOUND, HTTP:UNSUPPORTED_MEDIA_TYPE">
+				<ee:transform doc:name="Transform Message" doc:id="54fe4a42-ebec-47dd-b51d-09d1acd351e5">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	error:{
+	error:"unsupported media"
+	}
+	
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+    </flow>
+</mule>

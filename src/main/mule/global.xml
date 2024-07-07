@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="1bbf6d1a-880e-4f1e-b0a8-6c6a9dfb5f19" file="global-delta-dev.yaml" />
+	<global-property doc:name="Global Property" doc:id="15d0d83d-7191-47fa-9302-e827d900b0af" name="env" value="dev" />
+	<http:request-config name="HTTP_Request_configuration-delta" doc:name="HTTP Request configuration" doc:id="fde21f13-9f4b-4ee6-86a2-dd9c35bd58c9" basePath="${delta.basepath}" responseTimeout="60000">
+		<http:request-connection protocol="${delta.protocol}" host="${delta.host}" port="${delta.port}" connectionIdleTimeout="60000"/>
+	</http:request-config>
+</mule>
